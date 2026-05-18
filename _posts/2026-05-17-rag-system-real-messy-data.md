@@ -1,9 +1,20 @@
 ---
-layout: post
-title: "What I Learned Building a RAG System on Real, Messy Data"
-date: 2026-05-17
-categories: [rag, ml, python, ai]
-excerpt: "Lessons from building a 60-city municipal code Q&A system."
+title: What I Learned Building a RAG System on Real, Messy Data
+subtitle: Lessons from building a 60-city municipal code Q&A system
+slug: what-i-learned-building-a-rag-system-on-real-messy-data
+tags:
+  - rag
+  - llm
+  - machinelearning
+  - python
+  - ai
+  - webdev
+cover: ""
+saveAsDraft: true
+---
+
+*Lessons from building a 60-city municipal code Q&A system.*
+
 ---
 
 ## Background
@@ -16,7 +27,7 @@ I picked municipal permit data as my domain. If you have ever tried to figure ou
 
 The result is [PermitIQ](https://www.permit-iq.com/), a system covering 60+ US cities. This article is my honest account of how I built it.
 
-![PermitIQ answering "What do I need to do to build an ADU in Berkeley, CA?" with cited municipal code sections](/assets/images/adu-screenshot.png)
+![PermitIQ answering "What do I need to do to build an ADU in Berkeley, CA?" with cited municipal code sections](adu-screenshot.png)
 
 ---
 
@@ -26,7 +37,7 @@ Before I get into what I built, it helps to understand the standard playbook for
 
 A typical RAG pipeline looks like this:
 
-![Standard RAG Pipeline](/assets/images/rag-standard.png)
+![Standard RAG Pipeline](rag-standard.png)
 
 **Step 1: Collect documents.** You gather your source material. In most tutorials this is a folder of PDFs or a Wikipedia dump. In production it is usually a web scraper, a database export, or an API.
 
@@ -48,7 +59,7 @@ Where it breaks down in real production systems is in steps 1 and 2, which most 
 
 Here is the complete data flow for PermitIQ:
 
-![PermitIQ Architecture](/assets/images/permitiq-arch.png)
+![PermitIQ Architecture](permitiq-arch.png)
 
 ---
 
@@ -331,4 +342,4 @@ I find it equal parts absurd and endearing. There is something very human about 
 
 I built PermitIQ entirely on my own time, out of genuine curiosity. I am an engineer who likes to understand how things work by building them. Reading about RAG systems was not enough — I wanted to get my hands dirty, hit real problems, and figure out solutions. That is how I learn, and that is how I keep up with where technology is headed.
 
-All the code, infrastructure, and data here are my own work, funded out of my own pocket. If you are building something in this space or just want to talk shop, I am always up for it.
+All the code, infrastructure, and data here are my own work, funded out of my own pocket. I deliberately chose to host this on my own GCP account rather than use any infrastructure from my employer. A misconfiguration in a personal side project should never be a vector for a security incident that could affect an entirely separate organization's resources.
