@@ -3,10 +3,7 @@ layout: post
 title: "What I Learned Building a RAG System on Real, Messy Data"
 date: 2026-05-17
 categories: [rag, ml, python, ai]
----
-
-*Lessons from building a 60-city municipal code Q&A system.*
-
+excerpt: "Lessons from building a 60-city municipal code Q&A system."
 ---
 
 ## Background

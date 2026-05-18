@@ -8,6 +8,8 @@ theme: minima
 minima:
   skin: classic
 
+show_excerpts: true
+
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
