@@ -1,0 +1,15 @@
+title: Subodh Nijsure
+description: Engineering blog — ML, RAG systems, Android, and whatever I am currently building.
+url: "https://snijsure-personal.github.io"
+author: Subodh Nijsure
+
+theme: minima
+
+minima:
+  skin: classic
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+permalink: /:year/:month/:day/:title/
