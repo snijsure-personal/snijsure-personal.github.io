@@ -1,16 +1,9 @@
 ---
-title: What I Learned Building a RAG System on Real, Messy Data
-subtitle: Lessons from building a 60-city municipal code Q&A system
-slug: what-i-learned-building-a-rag-system-on-real-messy-data
-tags:
-  - rag
-  - llm
-  - machinelearning
-  - python
-  - ai
-  - webdev
-cover: ""
-saveAsDraft: true
+layout: post
+title: "What I Learned Building a RAG System on Real, Messy Data"
+date: 2026-05-17
+categories: [rag, ml, python, ai]
+excerpt: "Lessons from building a 60-city municipal code Q&A system."
 ---
 
 *Lessons from building a 60-city municipal code Q&A system.*
