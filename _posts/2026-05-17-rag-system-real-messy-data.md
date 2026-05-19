@@ -20,7 +20,7 @@ I picked municipal permit data as my domain. If you have ever tried to figure ou
 
 The result is [PermitIQ](https://www.permit-iq.com/), a system covering 60+ US cities. This article is my honest account of how I built it.
 
-![PermitIQ answering "What do I need to do to build an ADU in Berkeley, CA?" with cited municipal code sections](adu-screenshot.png)
+![PermitIQ answering "What do I need to do to build an ADU in Berkeley, CA?" with cited municipal code sections](/assets/images/adu-screenshot.png)
 
 ---
 
@@ -30,7 +30,7 @@ Before I get into what I built, it helps to understand the standard playbook for
 
 A typical RAG pipeline looks like this:
 
-![Standard RAG Pipeline](rag-standard.png)
+![Standard RAG Pipeline](/assets/images/rag-standard.png)
 
 **Step 1: Collect documents.** You gather your source material. In most tutorials this is a folder of PDFs or a Wikipedia dump. In production it is usually a web scraper, a database export, or an API.
 
@@ -52,7 +52,7 @@ Where it breaks down in real production systems is in steps 1 and 2, which most 
 
 Here is the complete data flow for PermitIQ:
 
-![PermitIQ Architecture](permitiq-arch.png)
+![PermitIQ Architecture](/assets/images/permitiq-arch.png)
 
 ---
 
