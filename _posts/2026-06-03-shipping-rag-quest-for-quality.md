@@ -22,7 +22,7 @@ This post is what happened after I started actually using it, what broke, what I
 
 ---
 
-## What I Learned After Shipping
+## Shortcomings of the Phase 1 Implementation
 
 I had quietly assumed that if Oakland worked well, the other 59 cities would be in the same ballpark. They were not. The first time I ran a single question against every city in the system, more than a third of them returned garbage. That kicked off everything that follows.
 
@@ -250,7 +250,7 @@ The fix:
 
 While Gemini is 8x cheaper than Claude, a "hobby" project can still rack up a bill during a heavy evaluation run or a viral spike in traffic. If one is looking to cap spend, the next logical step is to bring the execution **local**.
 
-### Your Local Options
+### Local Options
 
 In 2026, one does not need a massive server farm to run high-quality models. There are two main paths:
 
@@ -309,11 +309,11 @@ In Part 1, I noted that the LLM is rarely the bottleneck. Phase 2 proved it. Eve
 
 There is a temptation to attribute AI quality to the model itself. But the model is the most stable component. The real engineering happens in the "wrappers": the chunker, the retriever, the database, and the evaluation loop. 
 
-Phase 1 was about proving it could be done. Phase 2 was about proving it could be *engineered*. 
+Phase 1 was about investigating if it could be done. Phase 2 was about investigating if it could be *engineered*. 
 
 ---
 
 ## About This Project
-PermitIQ was built on my own time. Total spend: $200 - 250, mostly on embeddings and evaluation. Storage and serving costs remain negligible. 
+PermitIQ was built on my own time. Total spend: $100 - 150, mostly on embeddings and evaluation. Storage and serving costs remain negligible. 
 
 Thanks for reading.
