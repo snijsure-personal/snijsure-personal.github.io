@@ -287,6 +287,25 @@ Strictly speaking, **no**. You can run a fully local RAG stack:
 
 The trade-off is **maintenance vs. cost**. Vertex AI is a managed service—it's always there, it scales, and you don't have to worry about your local power bill or GPU cooling. But for a heavy user, a $1,500 PC pays for itself in roughly 6 months of API savings.
 
+### 10d. The Self-Hosting Route: A Hardware BOM
+
+If you're ready to make the jump, here is the **"Golden Build"** for June 2026—the most cost-effective way to get high-performance local RAG without breaking the bank.
+
+| Component | Budget Choice | Cost |
+| :--- | :--- | :--- |
+| **GPU** | Used RTX 3060 12GB | $200 |
+| **PC** | Used Dell OptiPlex 7080 MT | $130 |
+| **PSU** | New/Used 550W PSU | $60 |
+| **Misc** | Power Adapter / Shipping | $20 |
+| **TOTAL** | | **$410** |
+
+**Where to shop (June 2026):**
+1. **eBay:** The most reliable source for used GPUs. Look for sellers with high ratings and original packaging if possible.
+2. **Back Market / VIPOutlet:** Excellent for finding "base" business desktops like the OptiPlex with a warranty.
+3. **FB Marketplace:** Best for local deals on gaming PCs being sold without a GPU by users who just upgraded to the RTX 50-series.
+
+**The ROI Verdict:** For an upfront investment of **~$410**, you can eliminate your ~$20/month recurring hosting and API bill. This setup pays for itself in roughly **20 months**. More importantly, you gain "instant" response times and the freedom to run 1,000 evaluations a day without checking your credit balance.
+
 ---
 
 ## What's Next
