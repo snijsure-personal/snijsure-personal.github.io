@@ -132,11 +132,30 @@ ON embeddings USING gin (to_tsvector('english', coalesce(text, '')));
 
 ---
 
-## 7. Contextual Retrieval: Anthropic's Technique, at Scale
+## 7. Contextual Retrieval: Scaling Anthropic's Technique
 
-Chunks in isolation lack context. A chunk saying *"Maximum height is 18 feet"* could be about fences or ADUs. [Anthropic's contextual retrieval](https://www.anthropic.com/news/contextual-retrieval) solves this by prepending a one-sentence summary of the parent document to each chunk before embedding.
+This was the single biggest quality lever in the post-launch period. The core idea (from [Anthropic's research](https://www.anthropic.com/news/contextual-retrieval)) is that chunks in isolation lack context. A chunk saying *"Maximum height is 18 feet"* could be about fences, ADUs, or sheds. By prepending a context sentence to each chunk before embedding, we preserve its "place" in the legal hierarchy.
 
-I ran this across 600,000 chunks using a Cloud Run job. Cost: ~$57 in Gemini Flash Lite calls. Lift: **+10% faithfulness** and **+5% context precision** on Oakland. 
+### 7a. The Prompt Engineering
+
+The "meat" of this technique is the prompt used to generate the context. It needs to be precise and descriptive. My enrichment prompt looks like this:
+
+> *"Write a single sentence (max 80 words) that situates this chunk within the document. Include the section number or title, the topic, and the key requirement or condition it establishes. Output ONLY the sentence."*
+
+This forces the model (Gemini 2.5 Flash Lite) to ignore the noise and focus on the legal identity of the chunk.
+
+### 7b. Engineering at Scale: 600k Chunks
+
+Enriching a few chunks is easy. Enriching 600,000 chunks across 60 cities is a distributed systems problem.
+- **Parallelism:** I used a `ThreadPoolExecutor` with 15 concurrent workers. This hit the "sweet spot" where I could maximize throughput without triggering the 429 rate limits of the Gemini API.
+- **Checkpointing:** Processing 600k chunks takes ~7 hours. If the script crashes at hour 6, you don't want to start over. I implemented a pickle-based checkpointing system that saves progress every 500 chunks.
+- **Cloud Run Jobs:** To run this in production, I packaged the script into a **Cloud Run Job**. I sharded the work across 4 parallel tasks, each handling a subset of the cities. Total cost: ~$57 in Gemini Flash Lite calls plus pennies in compute.
+
+### 7c. Measuring the Lift
+
+The results were immediate and measurable. On my Oakland test set, contextual retrieval provided a **+10% lift in Faithfulness** and a **+5% lift in Context Precision**. 
+
+The reason? When a user asks about "ADU height," the embeddings for chunks enriched with "This section establishes height limits for Accessory Dwelling Units (ADUs)..." are now much closer to the query than raw text chunks that just say "Maximum height is 18 feet."
 
 ---
 
@@ -197,7 +216,7 @@ I ran the 26-question set against five representative cities (130 evals total).
 
 **The takeaway:** Faithfulness is relatively stable (0.29 - 0.57), meaning the generator is behaving consistently. But **Context Precision is the variable.** Irvine (0.10) is a retrieval emergency. The scraper likely missed the breadcrumb structure, leaving the search blind. 
 
-**RAGAS turned "it feels better" into a diagnostic tool.**
+**RAGAS turned "it feels better" into a number I could track per deploy.**
 
 ---
 
