@@ -122,7 +122,7 @@ The fix is hybrid search:
 - **Sparse pass**: PostgreSQL full-text search (BM25 ranking).
 - **Fusion**: [Reciprocal Rank Fusion (RRF)](https://en.wikipedia.org/wiki/Rank_fusion), `score = Σ 1/(rank + 60)`. 
 
-Rank fusion sidesteps the normalization problem between cosine distances and [BM25 (Best Match 25)](https://en.wikipedia.org/wiki/Okapi_BM25) scores. I blend them at a **0.7/0.3** ratio—dense still dominates, but BM25 gets to "vote" for exact matches.
+Rank fusion sidesteps the normalization problem between cosine distances and [BM25 (Best Match 25)](https://en.wikipedia.org/wiki/Okapi_BM25) scores. I blend them at a **0.7/0.3** ratio - dense still dominates, but BM25 gets to "vote" for exact matches.
 
 The database side was handled with a [GIN (Generalized Inverted Index)](https://en.wikipedia.org/wiki/Generalized_Inverted_Index) built `CONCURRENTLY` to avoid table locks:
 ```sql
@@ -164,7 +164,7 @@ The takeaway? **Retrieval is the variable, generation is the constant.** Faithfu
 
 ## 9. Claude → Gemini in the Live App
 
-Economics forced a migration from Claude Sonnet to Gemini 2.5 Flash. Cost dropped from **$0.04 to $0.005 per chat turn**—an 8x reduction.
+Economics forced a migration from Claude Sonnet to Gemini 2.5 Flash. Cost dropped from **$0.04 to $0.005 per chat turn** - an 8x reduction.
 
 However, Gemini surfaced **Citation Stacking**: citing 12 identical chunks for one rule.
 *"Maximum height is 18 feet [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]."*
@@ -184,7 +184,7 @@ The fix:
 
 ## Musings: The Engineering is in the Wrappers
 
-In Part 1, I noted that the LLM is rarely the bottleneck. Phase 2 proved it. Everything I shipped—HNSW fixes, hybrid search, contextual embeddings, RAGAS—was a data-or-systems problem. 
+In Part 1, I noted that the LLM is rarely the bottleneck. Phase 2 proved it. Everything I shipped - HNSW fixes, hybrid search, contextual embeddings, RAGAS - was a data-or-systems problem. 
 
 There is a temptation to attribute AI quality to the model itself. But the model is the most stable component. The real engineering happens in the "wrappers": the chunker, the retriever, the database, and the evaluation loop. 
 
