@@ -5,8 +5,6 @@ date: 2026-06-03
 categories: [rag, ai, engineering]
 excerpt: "After the initial build: quality audits, hybrid retrieval, contextual embeddings, and the cost of measuring what you build."
 ---
-saveAsDraft: true
----
 
 *Companion to [Part 1: What I Learned Building a RAG System on Real, Messy Data](https://snijsure-personal.github.io/2026/05/17/rag-system-real-messy-data/).*
 
@@ -150,6 +148,7 @@ Building a RAG system without evaluation is equivalent to refactoring code witho
 I used Gemini 2.5 Pro as the judge. Initially, I set `max_output_tokens=8` for YES/NO calls. But Gemini's internal "thinking" tokens consumed the budget before it could output "YES". The fix was bumping the ceiling to 256.
 
 ### The 5-City Results
+
 | City | Faithfulness | Context Precision |
 |------|--------------|-------------------|
 | Oakland       | 0.347 | 0.513 |
