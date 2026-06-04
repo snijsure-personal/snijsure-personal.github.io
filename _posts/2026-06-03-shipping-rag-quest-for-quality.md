@@ -180,18 +180,45 @@ Having a fixed set of questions is critical. It allows you to A/B test changesâ€
 The evaluator measures two core metrics on a 0.0 to 1.0 scale:
 
 **1. Faithfulness (The Hallucination Guard)**
-This measures if the answer is grounded *only* in the retrieved context. 
-- The **Judge LLM** (Gemini 2.5 Pro) extracts every atomic factual claim from the generated answer.
-- For each claim, it looks at the retrieved chunks and asks: *"Is this claim directly supported by this text?"*
-- **Faithfulness = (Supported Claims) / (Total Claims).**
-- *Goal:* 1.0. If this is low, your model is hallucinating or using its pre-trained knowledge instead of your data.
+This measures if the answer is grounded *only* in the retrieved context. The judge (Gemini 2.5 Pro) extracts every factual claim from the answer and verifies it against the context.
+
+```python
+def score_faithfulness(question, answer, contexts, judge):
+    # Step 1: Extract claims
+    claims_raw = _gen(judge, f"List each distinct factual claim in this answer: {answer}")
+    claims = [c.strip() for c in claims_raw.splitlines() if c.strip()]
+    
+    # Step 2: Verify each claim against context
+    supported = 0
+    for claim in claims:
+        verdict = _gen(judge, f"Context: {contexts}\nClaim: {claim}\nIs this supported? YES/NO")
+        if verdict.upper().startswith("YES"):
+            supported += 1
+    
+    return supported / len(claims)
+```
 
 **2. Context Precision (The Retrieval Guard)**
-This measures if your search is actually finding the right needles in the haystack.
-- The judge looks at each of the 12 retrieved chunks and asks: *"Is this chunk relevant to answering the question?"*
-- We then calculate **Mean Average Precision** over the ranked list.
-- **Context Precision** = (Î£ Precision@k) / (Total Relevant Chunks).
-- *Goal:* 1.0. If this is low, your chunks are too small, your embeddings are weak, or your breadcrumb metadata is missing.
+This measures if your search is actually finding the right needles in the haystack. It uses a ranking metric to ensure the most relevant chunks are at the top of the list.
+
+```python
+def score_context_precision(question, contexts, judge):
+    relevance = []
+    for ctx in contexts:
+        verdict = _gen(judge, f"Question: {question}\nContext: {ctx}\nIs this relevant? YES/NO")
+        relevance.append(1 if verdict.upper().startswith("YES") else 0)
+
+    # Compute Average Precision over the ranked list
+    total_relevant = sum(relevance)
+    if total_relevant == 0: return 0.0
+
+    score, running = 0.0, 0
+    for k, rel in enumerate(relevance):
+        if rel:
+            running += 1
+            score += running / (k + 1)
+    return score / total_relevant
+```
 
 ### 8c. The "Thinking Token" Trap
 
