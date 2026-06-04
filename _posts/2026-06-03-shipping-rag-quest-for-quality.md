@@ -26,11 +26,11 @@ This post is what happened after I started actually using it, what broke, what I
 
 I had quietly assumed that if Oakland worked well, the other 59 cities would be in the same ballpark. They were not. The first time I ran a single question against every city in the system, more than a third of them returned garbage. That kicked off everything that follows.
 
-I'll walk through it in the order it happened: the audit that revealed the problem, three bugs I had to fix, three improvements I shipped, and one measurement framework I built so I could stop guessing.
+I'll walk through it in the order it happened: the audit that revealed the problem, the bugs I had to fix, the improvements I shipped, and the measurement framework I built so I could stop guessing.
 
 ---
 
-## 1. The Quality Audit: One Question, 35 Cities
+## The Quality Audit: One Question, 35 Cities
 
 I wrote a short async script that hit `/api/chat` for every live city in the system with the same question:
 
@@ -44,11 +44,11 @@ Then I dumped the answers into a single file and read all of them.
 - **Bot Protection:** Some cities were behind bot-protection systems. The scraper got a 200 response with an "Access Denied, please complete the captcha" page in the body. The system happily indexed the rejection notice as if it were code.
 - **Stale Seeds:** City websites redesigned, URLs 404'd, and the embedding model dutifully encoded "Page Not Found" as a vector.
 
-The takeaway: **you don't know your RAG quality until you test it systematically.** A quality gate script should be a deployment step, not an afterthought. 
+The takeaway: **one doesn't know RAG quality until it is tested systematically.** A quality gate script should be a deployment step, not an afterthought. 
 
 ---
 
-## 2. The HNSW Filtered Query Bug
+## The HNSW Filtered Query Bug
 
 Most cities had not just thin data; they were returning zero results for *every* query. I assumed I had broken the retrieval pipeline. I had not. I had broken the index.
 
@@ -63,7 +63,7 @@ ORDER BY embedding <=> $1::vector
 LIMIT 12;
 ```
 
-What HNSW actually does on that query: it walks the graph and returns the 12 globally nearest vectors. Then PostgreSQL applies the `WHERE city = 'houston'` filter to those 12 rows. The global nearest neighbors are dominated by Denver (178k rows) and Austin (104k rows), both of which have very dense embedding spaces. After the filter, you get zero Houston rows. The user sees "No results found."
+What HNSW actually does on that query: it walks the graph and returns the 12 globally nearest vectors. Then PostgreSQL applies the `WHERE city = 'houston'` filter to those 12 rows. The global nearest neighbors are dominated by Denver (178k rows) and Austin (104k rows), both of which have very dense embedding spaces. After the filter, one gets zero Houston rows. The user sees "No results found."
 
 The fix was a one-line GUC (Grand Unified Configuration parameter) introduced in `pgvector` 0.8.0:
 
@@ -79,21 +79,11 @@ There was a second, smaller bug hiding behind the first: `SET` and `SELECT` need
 
 ---
 
-## 3. The html2text Code-Fence Trap
-
-I was using `html2text` to convert scraped HTML into Markdown. Most HTML converts cleanly; `<table>` does not. What html2text does with tables is wrap them in `<pre>` blocks. The chat [UI (User Interface)](https://en.wikipedia.org/wiki/User_interface) then renders them inside triple-backtick code fences. Unreadable.
-
-The fix was a marker-substitution pattern. Before html2text runs, I walk the soup, convert tables to pipe-formatted markdown, and replace them with a placeholder string (`TABLEPLACEHOLDERiEND`). After html2text returns, I swap the placeholders back for the real Markdown tables.
-
-**Lossy conversions are easier to fight upstream than downstream.**
-
----
-
-## 4. The System Prompt: Banning the Apology
+## The System Prompt: Banning the Apology
 
 Even cities with good data were producing answers like: *"Unfortunately, the retrieved sections don't specifically address..."*
 
-The model's default is to hedge when uncertain. You have to explicitly ban the behavior.
+The model's default is to hedge when uncertain. One has to explicitly ban the behavior.
 - *"Do NOT open with disclaimers, apologies, or 'unfortunately'. Lead directly with the answer."*
 - *"First share everything the retrieved sections DO say, then add ONE brief closing note if something is genuinely missing."*
 
@@ -101,19 +91,15 @@ The texture of the answers changed immediately. Leading with substance matters.
 
 ---
 
-## 5. "What Can I Ask?": Coverage Before the First Question
+## "What Can I Ask?": Coverage Before the First Question
 
 A user lands on a thin-data city, asks a question, gets a bad answer, and loses trust in the entire system. 
 
-The fix: surface coverage information upfront. `GET /api/coverage/[cityId]` queries the database for chunk counts and a random sample of breadcrumb paths. A small [LLM (Large Language Model)](https://en.wikipedia.org/wiki/Large_language_model) then summarizes these into 3–4 plain-English sentences:
-
-> *"Oakland's indexed sections cover building permit requirements extensively, including ADU rules, electrical/plumbing/mechanical permits... Business license requirements are not covered."*
-
-The honest framing of what the system *doesn't* cover pre-empts the trust-killer.
+The fix: surface coverage information upfront. `GET /api/coverage/[cityId]` queries the database for chunk counts and a random sample of breadcrumb paths. A small [LLM (Large Language Model)](https://en.wikipedia.org/wiki/Large_language_model) then summarizes these into 3 - 4 plain-English sentences. The honest framing of what the system *doesn't* cover pre-empts the trust-killer.
 
 ---
 
-## 6. Hybrid Search: BM25 + Dense Vectors + RRF
+## Hybrid Search: BM25 + Dense Vectors + RRF
 
 Pure vector search fails on exact-match queries like "Section 420.6" or "Title 17". Semantic search is great for intent; it's terrible for legal citations.
 
@@ -132,11 +118,11 @@ ON embeddings USING gin (to_tsvector('english', coalesce(text, '')));
 
 ---
 
-## 7. Contextual Retrieval: Scaling Anthropic's Technique
+## Contextual Retrieval: Scaling Anthropic's Technique
 
-This was the single biggest quality lever in the post-launch period. The core idea (from [Anthropic's research](https://www.anthropic.com/news/contextual-retrieval)) is that chunks in isolation lack context. A chunk saying *"Maximum height is 18 feet"* could be about fences, ADUs, or sheds. By prepending a context sentence to each chunk before embedding, we preserve its "place" in the legal hierarchy.
+This was the single biggest quality lever in the post-launch period. The core idea (from [Anthropic's research](https://www.anthropic.com/news/contextual-retrieval)) is that chunks in isolation lack context. A chunk saying *"Maximum height is 18 feet"* could be about fences, ADUs, or sheds. By prepending a context sentence to each chunk before embedding, one preserves its "place" in the legal hierarchy.
 
-### 7a. The Prompt Engineering
+### The Prompt Engineering
 
 The "meat" of this technique is the prompt used to generate the context. It needs to be precise and descriptive. My enrichment prompt looks like this:
 
@@ -144,14 +130,14 @@ The "meat" of this technique is the prompt used to generate the context. It need
 
 This forces the model (Gemini 2.5 Flash Lite) to ignore the noise and focus on the legal identity of the chunk.
 
-### 7b. Engineering at Scale: 600k Chunks
+### Engineering at Scale: 600k Chunks
 
 Enriching a few chunks is easy. Enriching 600,000 chunks across 60 cities is a distributed systems problem.
-- **Parallelism:** I used a `ThreadPoolExecutor` with 15 concurrent workers. This hit the "sweet spot" where I could maximize throughput without triggering the 429 rate limits of the Gemini API.
-- **Checkpointing:** Processing 600k chunks takes ~7 hours. If the script crashes at hour 6, you don't want to start over. I implemented a pickle-based checkpointing system that saves progress every 500 chunks.
+- **Parallelism:** I used a `ThreadPoolExecutor` with 15 concurrent workers. This hit the "sweet spot" where throughput was maximized without triggering the 429 rate limits of the Gemini API.
+- **Checkpointing:** Processing 600k chunks takes ~7 hours. If the script crashes at hour 6, one doesn't want to start over. I implemented a pickle-based checkpointing system that saves progress every 500 chunks.
 - **Cloud Run Jobs:** To run this in production, I packaged the script into a **Cloud Run Job**. I sharded the work across 4 parallel tasks, each handling a subset of the cities. Total cost: ~$57 in Gemini Flash Lite calls plus pennies in compute.
 
-### 7c. Measuring the Lift
+### Measuring the Lift
 
 The results were immediate and measurable. On my Oakland test set, contextual retrieval provided a **+10% lift in Faithfulness** and a **+5% lift in Context Precision**. 
 
@@ -159,13 +145,13 @@ The reason? When a user asks about "ADU height," the embeddings for chunks enric
 
 ---
 
-## 8. RAGAS: Building a Real Evaluation Loop
+## RAGAS: Building a Real Evaluation Loop
 
-Building a RAG system without evaluation is roughly equivalent to refactoring code without tests. It works until it doesn't, and you have no way to know when "doesn't" starts.
+Building a RAG system without evaluation is roughly equivalent to refactoring code without tests. It works until it doesn't, and one has no way to know when "doesn't" starts.
 
 When I first shipped, my evaluation "loop" was me typing five questions into the UI. That doesn't scale to 60 cities. I needed a systematic way to measure quality. I built an evaluator inspired by the [RAGAS (RAG Assessment)](https://docs.ragas.io/en/stable/) framework, using the **LLM-as-a-Judge** pattern.
 
-### 8a. The Golden Dataset
+### The Golden Dataset
 
 I hand-curated a **"Golden Dataset"** of 26 questions that represent the real diversity of user intent in this domain:
 - **Procedural:** *"How do I schedule a building inspection?"* or *"How do I get a demolition permit?"*
@@ -173,13 +159,13 @@ I hand-curated a **"Golden Dataset"** of 26 questions that represent the real di
 - **Ambiguous/Multi-part:** *"What permits do I need for a kitchen remodel?"* (requires building, electrical, and plumbing context).
 - **Negative/Out-of-scope:** *"What is the best restaurant near city hall?"* (Testing if the system correctly rejects non-permit questions).
 
-Having a fixed set of questions is critical. It allows you to A/B test changes—like swapping an embedding model or tweaking a prompt—and see exactly how the numbers move.
+Having a fixed set of questions is critical. It allows one to A/B test changes - like swapping an embedding model or tweaking a prompt - and see exactly how the numbers move.
 
-### 8b. The Metrics: Faithfulness & Context Precision
+### The Metrics: Faithfulness & Context Precision
 
 The evaluator measures two core metrics on a 0.0 to 1.0 scale:
 
-**1. Faithfulness (The Hallucination Guard)**
+**Faithfulness (The Hallucination Guard)**
 This measures if the answer is grounded *only* in the retrieved context. The judge (Gemini 2.5 Pro) extracts every factual claim from the answer and verifies it against the context.
 
 ```python
@@ -198,7 +184,7 @@ def score_faithfulness(question, answer, contexts, judge):
     return supported / len(claims)
 ```
 
-**2. Context Precision (The Retrieval Guard)**
+**Context Precision (The Retrieval Guard)**
 This measures if your search is actually finding the right needles in the haystack. It uses a ranking metric to ensure the most relevant chunks are at the top of the list.
 
 ```python
@@ -220,15 +206,15 @@ def score_context_precision(question, contexts, judge):
     return score / total_relevant
 ```
 
-### 8c. The "Thinking Token" Trap
+### The "Thinking Token" Trap
 
 I used Gemini 2.5 Pro as the judge. Initially, I set `max_output_tokens=8` for the YES/NO judge call, assuming a one-word answer would be fast and cheap. 
 
 It wasn't. Gemini Pro uses internal "thinking" tokens before producing output. Those tokens count against the limit. With a limit of 8, the thinking tokens consumed the entire budget, and the model returned an empty string. My parser saw an empty string, assumed "NO", and my first eval run showed 0% quality across every city. 
 
-**The fix:** Bump the budget to `max_output_tokens=256`. You only pay for what you use, so the ceiling is free, and it gives the model room to "think" before it commits to a YES.
+**The fix:** Bump the budget to `max_output_tokens=256`. One only pays for what is used, so the ceiling is free, and it gives the model room to "think" before it commits to a YES.
 
-### 8d. The 5-City Results
+### The 5-City Results
 
 I ran the 26-question set against five representative cities (130 evals total).
 
@@ -243,11 +229,11 @@ I ran the 26-question set against five representative cities (130 evals total).
 
 **The takeaway:** Faithfulness is relatively stable (0.29 - 0.57), meaning the generator is behaving consistently. But **Context Precision is the variable.** Irvine (0.10) is a retrieval emergency. The scraper likely missed the breadcrumb structure, leaving the search blind. 
 
-**RAGAS turned "it feels better" into a number I could track per deploy.**
+**RAGAS turned "it feels better" into a number one could track per deploy.**
 
 ---
 
-## 9. Claude → Gemini in the Live App
+## Claude -> Gemini in the Live App
 
 Economics forced a migration from Claude Sonnet to Gemini 2.5 Flash. Cost dropped from **$0.04 to $0.005 per chat turn** - an 8x reduction.
 
@@ -260,36 +246,36 @@ The fix:
 
 ---
 
-## 10. The Cost of Scaling: Transitioning to Local LLMs
+## The Cost of Scaling: Transitioning to Local LLMs
 
-While Gemini is 8x cheaper than Claude, a "hobby" project can still rack up a bill during a heavy evaluation run or a viral spike in traffic. If you're looking to cap your spend, the next logical step is to bring the execution **local**.
+While Gemini is 8x cheaper than Claude, a "hobby" project can still rack up a bill during a heavy evaluation run or a viral spike in traffic. If one is looking to cap spend, the next logical step is to bring the execution **local**.
 
-### 10a. Your Local Options
+### Your Local Options
 
-In 2026, you don't need a massive server farm to run high-quality models. You have two main paths:
+In 2026, one does not need a massive server farm to run high-quality models. There are two main paths:
 
-1. **Ollama (Development & Prototyping):** The "Docker for LLMs." It's the easiest way to run models like Llama 4 or Qwen locally. It handles the quantization (compressing the model) and provides a simple local API.
-2. **vLLM (Production & Throughput):** If you want to serve multiple users at once, vLLM is the gold standard. It uses "PagedAttention" to handle concurrent requests much more efficiently than a standard setup.
+1. **Ollama (Development & Prototyping):** The "Docker for LLMs." It is the easiest way to run models like Llama 4 or Qwen locally. It handles the quantization (compressing the model) and provides a simple local API.
+2. **vLLM (Production & Throughput):** If one wants to serve multiple users at once, vLLM is the gold standard. It uses "PagedAttention" to handle concurrent requests much more efficiently than a standard setup.
 
-### 10b. Hardware: VRAM is King
+### Hardware: VRAM is King
 
 The cost of "free" local execution is the upfront hardware investment. 
 - **The Budget Build:** An **RTX 3060 12GB** (~$250 used) can run 8B-parameter models comfortably. 
 - **The Sweet Spot:** An **RTX 5060 Ti 16GB** (~$500) can handle 14B-20B models, which are often the "sweet spot" for reasoning tasks.
 - **The Apple Alternative:** A **Mac M4 Pro with 64GB of RAM** is the best value for running massive 70B models, as its unified memory allows the GPU to use the entire system RAM.
 
-### 10c. Do I still need Google Vertex AI?
+### Do I still need Google Vertex AI?
 
-Strictly speaking, **no**. You can run a fully local RAG stack:
+Strictly speaking, **no**. One can run a fully local RAG stack:
 - **LLM:** Run Llama 3 via Ollama locally.
 - **Embeddings:** Use an open-source model like `BGE-M3` or `nomic-embed-text` locally instead of Vertex AI.
-- **Database:** Keep using **Neon (PostgreSQL)** for your vector store. Neon's free/hobby tier is generous, and you only pay for storage and compute when the DB is "awake."
+- **Database:** Keep using **Neon (PostgreSQL)** for your vector store. Neon's free/hobby tier is generous, and one only pays for storage and compute when the DB is "awake."
 
-The trade-off is **maintenance vs. cost**. Vertex AI is a managed service—it's always there, it scales, and you don't have to worry about your local power bill or GPU cooling. But for a heavy user, a $1,500 PC pays for itself in roughly 6 months of API savings.
+The trade-off is **maintenance vs. cost**. Vertex AI is a managed service - it is always there, it scales, and one does not have to worry about a local power bill or GPU cooling. But for a heavy user, a $1,500 PC pays for itself in roughly 6 months of API savings.
 
-### 10d. The Self-Hosting Route: A Hardware BOM
+### Hardware Budget (June 2026)
 
-If you're ready to make the jump, here is the **"Golden Build"** for June 2026—the most cost-effective way to get high-performance local RAG without breaking the bank.
+If one is ready to make the jump, here is a cost-effective hardware recipe for high-performance local RAG:
 
 | Component | Budget Choice | Cost |
 | :--- | :--- | :--- |
@@ -302,7 +288,7 @@ If you're ready to make the jump, here is the **"Golden Build"** for June 2026�
 **Where to shop (June 2026):**
 1. **eBay:** The most reliable source for used GPUs. Look for sellers with high ratings and original packaging if possible.
 2. **Back Market / VIPOutlet:** Excellent for finding "base" business desktops like the OptiPlex with a warranty.
-3. **FB Marketplace:** Best for local deals on gaming PCs being sold without a GPU by users who just upgraded to the RTX 50-series.
+3. **FB Marketplace:** Best locally for deals on gaming PCs being sold without a GPU by users who just upgraded.
 
 **The ROI Verdict:** For an upfront investment of **~$410**, one can eliminate the ~$20/month recurring hosting and API bill. This setup pays for itself in roughly **20 months**. More importantly, one gains "instant" response times and the freedom to run 1,000 evaluations a day without checking a credit balance.
 
@@ -328,6 +314,6 @@ Phase 1 was about proving it could be done. Phase 2 was about proving it could b
 ---
 
 ## About This Project
-PermitIQ was built on my own time. Total spend: $200–250, mostly on embeddings and evaluation. Storage and serving costs remain negligible. 
+PermitIQ was built on my own time. Total spend: $200 - 250, mostly on embeddings and evaluation. Storage and serving costs remain negligible. 
 
 Thanks for reading.
