@@ -304,11 +304,13 @@ If you're ready to make the jump, here is the **"Golden Build"** for June 2026â€
 2. **Back Market / VIPOutlet:** Excellent for finding "base" business desktops like the OptiPlex with a warranty.
 3. **FB Marketplace:** Best for local deals on gaming PCs being sold without a GPU by users who just upgraded to the RTX 50-series.
 
-**The ROI Verdict:** For an upfront investment of **~$410**, you can eliminate your ~$20/month recurring hosting and API bill. This setup pays for itself in roughly **20 months**. More importantly, you gain "instant" response times and the freedom to run 1,000 evaluations a day without checking your credit balance.
+**The ROI Verdict:** For an upfront investment of **~$410**, one can eliminate the ~$20/month recurring hosting and API bill. This setup pays for itself in roughly **20 months**. More importantly, one gains "instant" response times and the freedom to run 1,000 evaluations a day without checking a credit balance.
 
 ---
 
 ## What's Next
+- **Summer Vacation:** Taking a well-earned break before the next phase.
+- **DIY LLM/Postgres System:** Building the actual hardware and migrating the entire stack to a local, air-gapped environment.
 - **Temporal Versioning:** When was this section last updated?
 - **Entity Extraction:** Turning ordinance numbers and fee amounts into metadata filters.
 - **Continuous Eval in [CI (Continuous Integration)](https://en.wikipedia.org/wiki/Continuous_integration):** Catching regressions at [PR (Pull Request)](https://en.wikipedia.org/wiki/Pull_request) time.
