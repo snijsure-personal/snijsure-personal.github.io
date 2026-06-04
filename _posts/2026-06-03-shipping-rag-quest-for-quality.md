@@ -260,6 +260,35 @@ The fix:
 
 ---
 
+## 10. The Cost of Scaling: Transitioning to Local LLMs
+
+While Gemini is 8x cheaper than Claude, a "hobby" project can still rack up a bill during a heavy evaluation run or a viral spike in traffic. If you're looking to cap your spend, the next logical step is to bring the execution **local**.
+
+### 10a. Your Local Options
+
+In 2026, you don't need a massive server farm to run high-quality models. You have two main paths:
+
+1. **Ollama (Development & Prototyping):** The "Docker for LLMs." It's the easiest way to run models like Llama 4 or Qwen locally. It handles the quantization (compressing the model) and provides a simple local API.
+2. **vLLM (Production & Throughput):** If you want to serve multiple users at once, vLLM is the gold standard. It uses "PagedAttention" to handle concurrent requests much more efficiently than a standard setup.
+
+### 10b. Hardware: VRAM is King
+
+The cost of "free" local execution is the upfront hardware investment. 
+- **The Budget Build:** An **RTX 3060 12GB** (~$250 used) can run 8B-parameter models comfortably. 
+- **The Sweet Spot:** An **RTX 5060 Ti 16GB** (~$500) can handle 14B-20B models, which are often the "sweet spot" for reasoning tasks.
+- **The Apple Alternative:** A **Mac M4 Pro with 64GB of RAM** is the best value for running massive 70B models, as its unified memory allows the GPU to use the entire system RAM.
+
+### 10c. Do I still need Google Vertex AI?
+
+Strictly speaking, **no**. You can run a fully local RAG stack:
+- **LLM:** Run Llama 3 via Ollama locally.
+- **Embeddings:** Use an open-source model like `BGE-M3` or `nomic-embed-text` locally instead of Vertex AI.
+- **Database:** Keep using **Neon (PostgreSQL)** for your vector store. Neon's free/hobby tier is generous, and you only pay for storage and compute when the DB is "awake."
+
+The trade-off is **maintenance vs. cost**. Vertex AI is a managed service—it's always there, it scales, and you don't have to worry about your local power bill or GPU cooling. But for a heavy user, a $1,500 PC pays for itself in roughly 6 months of API savings.
+
+---
+
 ## What's Next
 - **Temporal Versioning:** When was this section last updated?
 - **Entity Extraction:** Turning ordinance numbers and fee amounts into metadata filters.
