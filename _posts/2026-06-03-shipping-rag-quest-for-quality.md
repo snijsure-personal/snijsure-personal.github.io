@@ -142,12 +142,49 @@ I ran this across 600,000 chunks using a Cloud Run job. Cost: ~$57 in Gemini Fla
 
 ## 8. RAGAS: Building a Real Evaluation Loop
 
-Building a RAG system without evaluation is equivalent to refactoring code without tests. I built a RAGAS-style evaluator measuring **Faithfulness** (no hallucinations) and **Context Precision** (retrieval quality).
+Building a RAG system without evaluation is roughly equivalent to refactoring code without tests. It works until it doesn't, and you have no way to know when "doesn't" starts.
 
-### The "Thinking Token" Trap
-I used Gemini 2.5 Pro as the judge. Initially, I set `max_output_tokens=8` for YES/NO calls. But Gemini's internal "thinking" tokens consumed the budget before it could output "YES". The fix was bumping the ceiling to 256.
+When I first shipped, my evaluation "loop" was me typing five questions into the UI. That doesn't scale to 60 cities. I needed a systematic way to measure quality. I built an evaluator inspired by the [RAGAS (RAG Assessment)](https://docs.ragas.io/en/stable/) framework, using the **LLM-as-a-Judge** pattern.
 
-### The 5-City Results
+### 8a. The Golden Dataset
+
+I hand-curated a **"Golden Dataset"** of 26 questions that represent the real diversity of user intent in this domain:
+- **Procedural:** *"How do I schedule a building inspection?"* or *"How do I get a demolition permit?"*
+- **Legal/Quantitative:** *"What is the maximum lot coverage allowed?"* or *"What are the height and setback requirements for a fence?"*
+- **Ambiguous/Multi-part:** *"What permits do I need for a kitchen remodel?"* (requires building, electrical, and plumbing context).
+- **Negative/Out-of-scope:** *"What is the best restaurant near city hall?"* (Testing if the system correctly rejects non-permit questions).
+
+Having a fixed set of questions is critical. It allows you to A/B test changes—like swapping an embedding model or tweaking a prompt—and see exactly how the numbers move.
+
+### 8b. The Metrics: Faithfulness & Context Precision
+
+The evaluator measures two core metrics on a 0.0 to 1.0 scale:
+
+**1. Faithfulness (The Hallucination Guard)**
+This measures if the answer is grounded *only* in the retrieved context. 
+- The **Judge LLM** (Gemini 2.5 Pro) extracts every atomic factual claim from the generated answer.
+- For each claim, it looks at the retrieved chunks and asks: *"Is this claim directly supported by this text?"*
+- **Faithfulness = (Supported Claims) / (Total Claims).**
+- *Goal:* 1.0. If this is low, your model is hallucinating or using its pre-trained knowledge instead of your data.
+
+**2. Context Precision (The Retrieval Guard)**
+This measures if your search is actually finding the right needles in the haystack.
+- The judge looks at each of the 12 retrieved chunks and asks: *"Is this chunk relevant to answering the question?"*
+- We then calculate **Mean Average Precision** over the ranked list.
+- **Context Precision** = (Σ Precision@k) / (Total Relevant Chunks).
+- *Goal:* 1.0. If this is low, your chunks are too small, your embeddings are weak, or your breadcrumb metadata is missing.
+
+### 8c. The "Thinking Token" Trap
+
+I used Gemini 2.5 Pro as the judge. Initially, I set `max_output_tokens=8` for the YES/NO judge call, assuming a one-word answer would be fast and cheap. 
+
+It wasn't. Gemini Pro uses internal "thinking" tokens before producing output. Those tokens count against the limit. With a limit of 8, the thinking tokens consumed the entire budget, and the model returned an empty string. My parser saw an empty string, assumed "NO", and my first eval run showed 0% quality across every city. 
+
+**The fix:** Bump the budget to `max_output_tokens=256`. You only pay for what you use, so the ceiling is free, and it gives the model room to "think" before it commits to a YES.
+
+### 8d. The 5-City Results
+
+I ran the 26-question set against five representative cities (130 evals total).
 
 | City | Faithfulness | Context Precision |
 |------|--------------|-------------------|
@@ -158,7 +195,9 @@ I used Gemini 2.5 Pro as the judge. Initially, I set `max_output_tokens=8` for Y
 | Denver        | 0.290 | 0.319 |
 | **Average**   | **0.423** | **0.395** |
 
-The takeaway? **Retrieval is the variable, generation is the constant.** Faithfulness is stable; Context Precision is all over the map. Irvine's 0.10 precision is a retrieval emergency I never would have seen without the numbers.
+**The takeaway:** Faithfulness is relatively stable (0.29 - 0.57), meaning the generator is behaving consistently. But **Context Precision is the variable.** Irvine (0.10) is a retrieval emergency. The scraper likely missed the breadcrumb structure, leaving the search blind. 
+
+**RAGAS turned "it feels better" into a diagnostic tool.**
 
 ---
 
